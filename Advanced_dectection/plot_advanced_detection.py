@@ -187,9 +187,89 @@ def plot_sample_period_zoom(df, num_samples=3000):
     plt.close()
     print(f"Saved: {out_path}")
 
+CLASS_LABELS = {
+    0: "Class 0: Clean Air (Khí sạch - Không có khí)",
+    1: "Class 1: Ammonia (NH3)",
+    2: "Class 2: Carbon Dioxide (CO2)",
+    3: "Class 3: Benzene (C6H6)",
+    4: "Class 4: Natural Gas / Methane (CH4)",
+    5: "Class 5: Carbon Monoxide (CO)",
+    6: "Class 6: Liquefied Petroleum Gas (LPG)"
+}
+
+def plot_6sensors_together_per_gas(df, num_samples=200):
+    fig, axes = plt.subplots(7, 1, figsize=(15, 18), sharex=False)
+    gas_cols = [f'Gas{i}' for i in range(1, 7)]
+    sensor_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    
+    for ax, cls in zip(axes, range(7)):
+        # Extract a continuous segment of data for this specific gas class
+        cls_df = df[df['Class'] == cls]
+        if len(cls_df) > num_samples:
+            # Take a continuous 200-sample slice
+            cls_slice = cls_df.iloc[:num_samples].copy()
+        else:
+            cls_slice = cls_df.copy()
+            
+        cls_slice = cls_slice.reset_index(drop=True)
+        
+        # Plot all 6 sensors on the SAME plot
+        for col, color in zip(gas_cols, sensor_colors):
+            ax.plot(cls_slice.index, cls_slice[col], color=color, linewidth=1.5, 
+                    marker='o', markersize=3, alpha=0.85, label=f"Sensor {col}")
+            
+        ax.set_title(f"Response of ALL 6 Sensors for {CLASS_LABELS[cls]}", fontsize=11, fontweight='bold', pad=4)
+        ax.set_ylabel("Raw Sensor Signal (ADC)", fontsize=9, fontweight='bold')
+        ax.grid(True, linestyle=":", alpha=0.6)
+        ax.legend(loc="upper right", fontsize=8, ncol=6, facecolor="white", framealpha=0.9)
+        
+    axes[-1].set_xlabel("Sample Index within Gas Exposure Segment", fontsize=11, fontweight='bold')
+    fig.suptitle("Electronic Nose Fingerprint: Simultaneous Response of ALL 6 MQ Sensors per Gas Environment", 
+                 fontsize=15, fontweight='bold', y=0.998)
+    plt.tight_layout()
+    
+    out_path = os.path.join(OUTPUT_DIR, "advanced_gas_6sensors_per_gas_type.png")
+    plt.savefig(out_path)
+    plt.close()
+    print(f"Saved: {out_path}")
+
+def plot_6sensors_overlay_timeseries(df, num_samples=300):
+    sample_df = df.iloc[10000:10000+num_samples].copy().reset_index(drop=True)
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 9), sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+    gas_cols = [f'Gas{i}' for i in range(1, 7)]
+    sensor_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    
+    # Plot ALL 6 sensors on the SAME plot together over time
+    for col, color in zip(gas_cols, sensor_colors):
+        ax1.plot(sample_df.index, sample_df[col], color=color, linewidth=1.5, 
+                 marker='o', markersize=3, alpha=0.85, label=f"Sensor {col}")
+        
+    ax1.set_title(f"All 6 MQ Sensors Plotted Together on Same Graph ({num_samples} Samples Segment)", fontsize=13, fontweight='bold')
+    ax1.set_ylabel("Raw Sensor Value (ADC/Volt)", fontsize=10, fontweight='bold')
+    ax1.legend(loc="upper right", fontsize=9, ncol=6, facecolor="white", framealpha=0.9)
+    ax1.grid(True, linestyle=":", alpha=0.6)
+    
+    # Plot Class timeline on second subplot
+    ax2.plot(sample_df.index, sample_df['Class'], color='black', drawstyle='steps-post', linewidth=1.8, label='Gas Class Target')
+    ax2.set_ylabel("Gas Class Target", fontsize=10, fontweight='bold')
+    ax2.set_yticks(range(7))
+    ax2.set_yticklabels([f"C{i}" for i in range(7)])
+    ax2.set_xlabel("Sample Index", fontsize=11, fontweight='bold')
+    ax2.grid(True, linestyle=":", alpha=0.6)
+    ax2.legend(loc="upper right", fontsize=9)
+    
+    plt.tight_layout()
+    out_path = os.path.join(OUTPUT_DIR, "advanced_gas_6sensors_overlay_timeseries.png")
+    plt.savefig(out_path)
+    plt.close()
+    print(f"Saved: {out_path}")
+
 if __name__ == "__main__":
     df = load_data()
     print("Generating Advanced Gas Detection visual plots...")
+    plot_6sensors_together_per_gas(df, num_samples=200)
+    plot_6sensors_overlay_timeseries(df, num_samples=300)
     plot_class_distribution(df)
     plot_raw_timeseries(df)
     plot_ppm_timeseries(df)
