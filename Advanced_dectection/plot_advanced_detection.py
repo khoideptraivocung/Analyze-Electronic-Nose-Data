@@ -51,21 +51,41 @@ def plot_class_distribution(df):
     plt.close()
     print(f"Saved: {out_path}")
 
+GAS_MAPPING = {
+    'Gas1': 'Gas1 (Ammonia - NH3)',
+    'Gas2': 'Gas2 (Carbon Dioxide - CO2)',
+    'Gas3': 'Gas3 (Benzene - C6H6)',
+    'Gas4': 'Gas4 (Natural Gas - CH4)',
+    'Gas5': 'Gas5 (Carbon Monoxide - CO)',
+    'Gas6': 'Gas6 (LPG - Liquefied Petroleum Gas)'
+}
+
+GAS_PPM_MAPPING = {
+    'Gas1 PPM': 'Gas1 PPM (Ammonia - NH3)',
+    'Gas2 PPM': 'Gas2 PPM (Carbon Dioxide - CO2)',
+    'Gas3 PPM': 'Gas3 PPM (Benzene - C6H6)',
+    'Gas4 PPM': 'Gas4 PPM (Natural Gas - CH4)',
+    'Gas5 PPM': 'Gas5 PPM (Carbon Monoxide - CO)',
+    'Gas6 PPM': 'Gas6 PPM (LPG)'
+}
+
 def plot_raw_timeseries(df, num_samples=300):
     # Select a tight 300-sample window for ultra-clear point-by-point inspection
     sample_df = df.iloc[10000:10000+num_samples].copy()
     
-    fig, axes = plt.subplots(6, 1, figsize=(15, 12), sharex=True)
+    fig, axes = plt.subplots(6, 1, figsize=(15, 13), sharex=True)
     gas_cols = [f'Gas{i}' for i in range(1, 7)]
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
     
     for ax, col, color in zip(axes, gas_cols, colors):
-        ax.plot(sample_df.index, sample_df[col], color=color, linewidth=1.5, marker='o', markersize=4, alpha=0.9, label=f"Raw {col}")
+        gas_label = GAS_MAPPING[col]
+        ax.plot(sample_df.index, sample_df[col], color=color, linewidth=1.5, marker='o', markersize=4, alpha=0.9, label=gas_label)
         ax.set_ylabel(f"{col} (ADC/Volt)", fontsize=9, fontweight='bold')
+        ax.set_title(f"Target Gas Channel: {gas_label}", fontsize=10, fontweight='bold', pad=3, loc='left')
         ax.legend(loc="upper right", fontsize=9, facecolor="white", framealpha=0.9)
         ax.grid(True, linestyle=":", alpha=0.6)
         
-    axes[0].set_title(f"High-Detail Ultra-Short Time Series ({num_samples} Consecutive Samples): Raw MQ Sensor Outputs", fontsize=14, fontweight='bold', pad=12)
+    axes[0].set_title(f"High-Detail Ultra-Short Time Series ({num_samples} Samples): Raw Outputs by Target Gas Channel", fontsize=14, fontweight='bold', pad=15)
     axes[-1].set_xlabel("Sample Index", fontsize=11, fontweight='bold')
     plt.tight_layout()
     
@@ -78,17 +98,19 @@ def plot_ppm_timeseries(df, num_samples=300):
     # Select the same tight 300-sample window for direct comparison
     sample_df = df.iloc[10000:10000+num_samples].copy()
     
-    fig, axes = plt.subplots(6, 1, figsize=(15, 12), sharex=True)
+    fig, axes = plt.subplots(6, 1, figsize=(15, 13), sharex=True)
     ppm_cols = [f'Gas{i} PPM' for i in range(1, 7)]
     colors = ['#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#1f77b4', '#ff7f0e']
     
     for ax, col, color in zip(axes, ppm_cols, colors):
-        ax.plot(sample_df.index, sample_df[col], color=color, linewidth=1.5, marker='s', markersize=4, alpha=0.9, label=col)
-        ax.set_ylabel(f"{col}", fontsize=9, fontweight='bold')
+        ppm_label = GAS_PPM_MAPPING[col]
+        ax.plot(sample_df.index, sample_df[col], color=color, linewidth=1.5, marker='s', markersize=4, alpha=0.9, label=ppm_label)
+        ax.set_ylabel("PPM Value", fontsize=9, fontweight='bold')
+        ax.set_title(f"Concentration: {ppm_label}", fontsize=10, fontweight='bold', pad=3, loc='left')
         ax.legend(loc="upper right", fontsize=9, facecolor="white", framealpha=0.9)
         ax.grid(True, linestyle=":", alpha=0.6)
         
-    axes[0].set_title(f"High-Detail Ultra-Short Time Series ({num_samples} Consecutive Samples): Converted Gas PPM", fontsize=14, fontweight='bold', pad=12)
+    axes[0].set_title(f"High-Detail Ultra-Short Time Series ({num_samples} Samples): PPM Concentrations by Target Gas", fontsize=14, fontweight='bold', pad=15)
     axes[-1].set_xlabel("Sample Index", fontsize=11, fontweight='bold')
     plt.tight_layout()
     
